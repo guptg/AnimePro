@@ -1,15 +1,21 @@
-# Python 
+# Python
 import argparse
-import sys 
+import sys
 
 # Local
-
+from SettingUp.logging import create_console_logger
 
 def main(argv):
-    
-    # Parse command line arguments 
-    parser = argparse.ArgumentParser(description="Recognizing characters from Naruto Face Dataset from kaggle: \
-                                                  https://www.kaggle.com/neetuk/naruto-face-dataset/")
+
+
+    # Create logger
+    logger = create_console_logger("Anime Project Logger")
+
+    # Parse command line argument
+    parser = argparse.ArgumentParser(description=
+                                     "Recognizing characters from Naruto Face Dataset \
+                                    from kaggle: \
+                                    https://www.kaggle.com/neetuk/naruto-face-dataset/")
     
 
 
