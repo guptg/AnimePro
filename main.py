@@ -5,7 +5,7 @@ import sys
 
 # Local
 from SettingUp.logging import create_console_logger
-from ExploratoryDataAnalysis.preprocess_data import PreprocessData
+from ExploratoryDataAnalysis.preprocess_data import PreprocessImageDataTf
 
 def main(argv):
     
@@ -21,13 +21,9 @@ def main(argv):
                         containing files in the dataset.")
     args = parser.parse_args(argv)
     
-    # Check to see if dataset directory existss
-    if not os.path.isfile(args.dataset_path):
-        raise FileExistsError("f{args.dataset_path} does not exist")
-    
-    # Pre process the dataset   
-    data_processor = PreprocessData({"datasetPath": args.dataset_path}, logger)
-    data = data_processor.load_data()
+    # Get a workable tf dataset from the raw data
+    data_processor = PreprocessImageDataTf({"dataPath": args.dataset_path}, logger)
+    data = data_processor.get_processed_data()
     
 
     

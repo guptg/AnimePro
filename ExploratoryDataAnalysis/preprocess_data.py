@@ -1,31 +1,170 @@
 # Python
-import logging
+import os
+import glob
 
+from abc import abstractmethod
+
+# Third-party
+import tensorflow as tf
 
 class PreprocessData():
-    """_summary_
+    """Class that handles raw data and processes it into curated data ready to work with. 
     """
 
-    # TODO map for file extensions
+    # Valid formats for data files, must be implemented in subclasses
+    EXTENSION_KEY = NotImplemented
 
-    def __init__(self, parameters: dict, logger: logging.Logger) -> None:
+    def __init__(self, parameters: dict, logger: "logging.Logger"):
+        """ Constructor
 
-        # TODO add logging for: number of files found, which file extesions do they have, average size of each file 
+        Args:
+            parameters (dict): Contains all needed parameters
+            logger (logging.Logger): Standard logging object
+        """
 
-        pass
+        self._logger = logger
 
+        # Unpack parameters
+        self._data_path = parameters.get("dataPath", None)
 
-    def load_data(self, path, split=False):
-        # TODO figure out how to load, compress, and save the data 
+        # Other properties
+        self._dataset_file_paths = None
+        self._file_extensions = None
+
+        # Check to see if the directory or file path exists
+        if not os.path.exists(self._data_path):
+            raise FileExistsError("f{self._data_path} does not exist.")
+
+    @abstractmethod
+    def get_processed_data(self, split: bool=False):
+        """Loads and preprocesses the data.
+
+        Args:
+            split (bool, optional): Splits the data into training and test sets. Defaults to False
+        """
+
+    def _get_file_extension(self, file_path: str):
+        """Gets the file format.
+
+        Args:
+            file_path (str): File path
+
+        Raises:
+            RuntimeError: File extension is not mappped in VALID_FORMATS
+
+        Returns:
+            str: File format 
+        """
+
+        file_extension = os.path.splitext(file_path)[1]
+
+        if file_extension not in self.EXTENSION_KEY:
+            raise RuntimeError(f"File {file_path} has an invalid extension.")
         
-
-        pass
+        return file_extension
     
-    def _compress_data(self):
-        pass
 
-    def _split_data(self):
-        pass
+    def _get_file_size(self, file_path):
+        """Gets the file size.
 
-    def _save_data(self):
-        pass
+        Args:
+            file_path (str): File path
+
+        Returns:
+            int: The size of th file
+        """
+
+        return os.path.getsize(file_path) / (1024 * 1024)
+
+
+class PreprocessImageData(PreprocessData):
+    """Class that handles raw image data and processes it into curated data ready to work with.
+    """
+
+    EXTENSION_KEY = {".jpg": ["JPEG"]}
+
+    def get_processed_data(self, split: bool=False):
+        """_summary_
+
+        Args:
+            split (bool, optional): _description_. Defaults to False.
+
+        Returns:
+            _type_: _description_
+        """
+        
+        # Get basic information
+        self._log_first_glance()
+
+        return None
+
+    def _log_first_glance(self):
+        """
+        Outputs information logs about the dataset directory contents. 
+        """
+
+        if os.path.isfile(self._data_path):
+            self._dataset_file_paths = [self._data_path]
+            self._file_extensions = [self._get_file_extension(x) for x in self._dataset_file_paths]
+            self._logger.info("Image is a " 
+                              + self.EXTENSION_KEY[self._get_file_extension(self._data_path)][0] 
+                              + f" of size {self._get_file_size(self._data_path):.4f} MB.")
+        
+        elif os.path.isdir(self._data_path):
+            self._dataset_file_paths = glob.glob(self._data_path + "*")
+            self._file_extensions = [self._get_file_extension(x) for x in self._dataset_file_paths]
+            dataset_size = sum([self._get_file_size(x) for x in self._dataset_file_paths])
+
+            self._logger.info(f"The dataset directory has {len(self._dataset_file_paths)} images "
+                              + "with file formats "
+                              + ", ".join(
+                              map(lambda x: self.EXTENSION_KEY[x][0], set(self._file_extensions))) 
+                              + f" and a total size of {dataset_size:.4f} MB.")
+
+
+
+class PreprocessImageDataTf(PreprocessImageData):
+    """Class that handles raw image data and processes it into curated tf data ready to work with.
+    """
+
+    EXTENSION_KEY = {".jpg": ["JPEG", tf.image.decode_jpeg]}
+
+    def get_processed_data(self, split: bool=False):
+        """_summary_
+
+        Args:
+            split (bool, optional): _description_. Defaults to False.
+
+        Returns:
+            _type_: _description_
+        """
+
+        # Get basic information
+        self._log_first_glance()
+
+        # Make a tensorflow dataset
+        data = tf.data.Dataset.from_tensor_slices(self._dataset_file_paths)
+        data = [self._process_data(x, y) for x, y in zip(data, self._file_extensions)]
+
+        return data
+ 
+    def _process_data(self, file_path, file_extension):
+        """_summary_
+
+        Args:
+            file_path (_type_): _description_
+            file_extension (_type_): _description_
+
+        Returns:
+            _type_: _description_
+        """
+
+        image = tf.io.read_file(file_path)
+        image = self.EXTENSION_KEY[file_extension][1](image, channels=3)
+
+        # Resize the image
+        # image = tf.image.resize(image, [224, 224]) 
+        # Normalize pixel values
+        # image = image / 255.0
+
+        return image
