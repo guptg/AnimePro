@@ -84,19 +84,15 @@ class PreprocessImageData(PreprocessData):
     EXTENSION_KEY = {".jpg": ["JPEG"]}
 
     def get_processed_data(self, split: bool=False):
-        """_summary_
+        """Loads and preprocesses the data.
 
         Args:
-            split (bool, optional): _description_. Defaults to False.
-
-        Returns:
-            _type_: _description_
+            split (bool, optional): Splits the data into training and test sets. Defaults to False
         """
         
         # Get basic information
         self._log_first_glance()
 
-        return None
 
     def _log_first_glance(self):
         """
@@ -128,43 +124,42 @@ class PreprocessImageDataTf(PreprocessImageData):
     """
 
     EXTENSION_KEY = {".jpg": ["JPEG", tf.image.decode_jpeg]}
+    RESIZE = 224
+    WHITE = 255
 
     def get_processed_data(self, split: bool=False):
-        """_summary_
+        """Loads and preprocesses the data.
 
         Args:
-            split (bool, optional): _description_. Defaults to False.
+            split (bool, optional): Splits the data into training and test sets. Defaults to False
 
         Returns:
-            _type_: _description_
+            tf.data.Dataset: TensorFlow dataset 
         """
 
         # Get basic information
         self._log_first_glance()
 
         # Make a tensorflow dataset
-        data = tf.data.Dataset.from_tensor_slices(self._dataset_file_paths)
-        data = [self._process_data(x, y) for x, y in zip(data, self._file_extensions)]
+        data_paths = tf.data.Dataset.from_tensor_slices(self._dataset_file_paths)
+        data = [self._process_data(path, extension) 
+                  for path, extension in zip(data_paths, self._file_extensions)]
 
-        return data
+        return tf.data.Dataset.from_tensor_slices(data)
  
-    def _process_data(self, file_path, file_extension):
-        """_summary_
+    def _process_data(self, file_path: tf.Tensor, file_extension: str):
+        """Preprocesses raw image data. 
 
         Args:
-            file_path (_type_): _description_
-            file_extension (_type_): _description_
+            file_path (tf.Tensor): Image file path
+            file_extension (str): Image file extension
 
         Returns:
-            _type_: _description_
+            tf.Tensor: Preprocessed image data
         """
-
         image = tf.io.read_file(file_path)
         image = self.EXTENSION_KEY[file_extension][1](image, channels=3)
-
-        # Resize the image
-        # image = tf.image.resize(image, [224, 224]) 
-        # Normalize pixel values
-        # image = image / 255.0
+        image = tf.image.resize(image, [self.RESIZE, self.RESIZE]) 
+        image = image / self.WHITE
 
         return image

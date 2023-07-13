@@ -25,8 +25,7 @@ def main(argv):
     data_processor = PreprocessImageDataTf({"dataPath": args.dataset_path}, logger)
     data = data_processor.get_processed_data()
     
-
-    
+  
 
 if __name__ == "__main__":
     sys.exit(main(sys.argv[1:]))
