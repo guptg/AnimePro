@@ -8,7 +8,7 @@ from abc import abstractmethod
 import tensorflow as tf
 
 class PreprocessData():
-    """Class that handles raw data and processes it into curated data ready to work with. 
+    """Abstract class that handles raw data and processes it into curated data ready to work with. 
     """
 
     # Valid formats for data files, must be implemented in subclasses
@@ -160,6 +160,5 @@ class PreprocessImageDataTf(PreprocessImageData):
         image = tf.io.read_file(file_path)
         image = self.EXTENSION_KEY[file_extension][1](image, channels=3)
         image = tf.image.resize(image, [self.RESIZE, self.RESIZE]) 
-        image = image / self.WHITE
 
         return image

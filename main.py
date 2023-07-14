@@ -6,6 +6,7 @@ import sys
 # Local
 from SettingUp.logging import create_console_logger
 from ExploratoryDataAnalysis.preprocess_data import PreprocessImageDataTf
+from ExploratoryDataAnalysis.visualize_data import VisualizeImageDataTf
 
 def main(argv):
     
@@ -24,6 +25,10 @@ def main(argv):
     # Get a workable tf dataset from the raw data
     data_processor = PreprocessImageDataTf({"dataPath": args.dataset_path}, logger)
     data = data_processor.get_processed_data()
+
+    # Visualize the data
+    data_visualizor = VisualizeImageDataTf({"imageData": data}, logger)
+    data_visualizor.view_snapshot()
     
   
 
